@@ -5,6 +5,7 @@ import com.haholl.sellmycar.controller.CarResponseDto;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -49,7 +50,7 @@ public class CarScrapingService {
     }
 
     public List<Integer> scrapeCarData(Car car) throws Exception {
-        String queryUrl = "https://www.autoscout24.com/lst/%s/%s?atype=C&cy=D%%2CA%%2CB%%2CE%%2CF%%2CI%%2CL%%2CNL&desc=0&fregfrom=%d&fregto=%d&powertype=kw&search_id=1&sort=standard&source=detailsearch&ustate=N%%2CU";
+        String queryUrl = "https://www.autoscout24.com/lst/%s/%s?atype=C&cy=D%%2CA%%2CB%%2CE%%2CF%%2CI%%2CL%%2CNL&desc=0&fregfrom=%d&fregto=%d&page=1&powertype=kw&search_id=1&sort=standard&source=listpage_pagination&ustate=N%%2CU";
         String formattedQuery = String.format(queryUrl,
                 car.getMake().toString().toLowerCase(),
                 car.getModel().toLowerCase(),
@@ -64,16 +65,25 @@ public class CarScrapingService {
         WebDriver driver = new ChromeDriver(options);
 
         try {
-            driver.get(formattedQuery);
+            for (int i = 1; i < 10; i++) {
+                formattedQuery = formattedQuery.replaceAll("page=[0-9]", "page=" + i);
+                log.info(formattedQuery);
+                driver.get(formattedQuery);
 
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[@data-testid='regular-price']")));
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+                try {
+                    wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[@data-testid='regular-price']")));
+                } catch (TimeoutException e) {
+                    log.info("Timeout occurred, no price elements found on page {}", i);
+                    break;
+                }
 
-            List<WebElement> priceElements = driver.findElements(By.xpath("//p[@class='Price_price__APlgs PriceAndSeals_current_price__ykUpx' and @data-testid='regular-price']"));
+                List<WebElement> priceElements = driver.findElements(By.xpath("//p[@class='Price_price__APlgs PriceAndSeals_current_price__ykUpx' and @data-testid='regular-price']"));
 
-            // Clean up price formatting
-            priceElements.forEach(price -> scrapedPrices.add(
-                    Integer.valueOf(price.getText().replaceAll("[^0-9]", ""))));
+                // Clean up price formatting
+                priceElements.forEach(price -> scrapedPrices.add(
+                        Integer.valueOf(price.getText().replaceAll("[^0-9]", ""))));
+            }
 
         } catch (Exception e) {
             throw new Exception(e);
