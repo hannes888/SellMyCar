@@ -1,7 +1,9 @@
 package com.haholl.sellmycar.service;
 
 import com.haholl.sellmycar.controller.Car;
+import com.haholl.sellmycar.controller.CarResponseDto;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -11,25 +13,50 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.stereotype.Service;
 
-import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
+@Slf4j
 public class CarScrapingService {
 
+    public CarResponseDto getCarStatistics(Car car) throws Exception {
+        List<Integer> scrapedPrices = scrapeCarData(car);
 
-    public static List<Car> scrapeCarDataWithSelenium(Car car) {
-        String queryUrl = "https://www.autoscout24.com/lst/{0}/{1}?atype=C&cy=D%2CA%2CB%2CE%2CF%2CI%2CL%2CNL&desc=0&fregfrom={2}&fregto={3}&powertype=kw&search_id=1&sort=standard&source=detailsearch&ustate=N%2CU";
-        String formattedQuery = MessageFormat.format(queryUrl,
+        if (scrapedPrices.isEmpty()) {
+            throw new NoSuchElementException("No statistics found for the car: " + car.getModel());
+        }
+
+        log.info(String.format("Found %d results for %s %s", scrapedPrices.size(), car.getMake(), car.getModel()));
+
+        Collections.sort(scrapedPrices);
+
+        int minPrice = scrapedPrices.getFirst();
+        int maxPrice = scrapedPrices.getLast();
+        int meanPrice = scrapedPrices.stream().mapToInt(Integer::intValue).sum() / scrapedPrices.size();
+        int medianPrice = scrapedPrices.get(scrapedPrices.size() / 2);
+
+        return new CarResponseDto(
+                minPrice,
+                maxPrice,
+                medianPrice,
+                meanPrice,
+                0  // TODO Implement mileage fetching
+        );
+    }
+
+    public List<Integer> scrapeCarData(Car car) throws Exception {
+        String queryUrl = "https://www.autoscout24.com/lst/%s/%s?atype=C&cy=D%%2CA%%2CB%%2CE%%2CF%%2CI%%2CL%%2CNL&desc=0&fregfrom=%d&fregto=%d&powertype=kw&search_id=1&sort=standard&source=detailsearch&ustate=N%%2CU";
+        String formattedQuery = String.format(queryUrl,
                 car.getMake().toString().toLowerCase(),
                 car.getModel().toLowerCase(),
                 car.getYear() - 1,
-                Math.min(car.getYear() + 1, 2024)).replace(",", "");
+                Math.min(car.getYear() + 1, 2024));
 
-        List<Car> scrapedCars = new ArrayList<>();
+        List<Integer> scrapedPrices = new ArrayList<>();
 
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
@@ -42,32 +69,22 @@ public class CarScrapingService {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[@data-testid='regular-price']")));
 
-            // Find the price elements using XPath
             List<WebElement> priceElements = driver.findElements(By.xpath("//p[@class='Price_price__APlgs PriceAndSeals_current_price__ykUpx' and @data-testid='regular-price']"));
 
-            // Check if any elements were found and print the result
-            if (!priceElements.isEmpty()) {
-                for (WebElement element : priceElements) {
-                    System.out.println("Car Price: " + element.getText());
-                }
-            } else {
-                System.out.println("No car prices found.");
-            }
-
-            System.out.println("Formatted URL: " + formattedQuery);
-
+            // Clean up price formatting
+            priceElements.forEach(price -> scrapedPrices.add(
+                    Integer.valueOf(price.getText().replaceAll("[^0-9]", ""))));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new Exception(e);
         } finally {
             driver.quit();
         }
 
-        return scrapedCars;
-    }
+        if (scrapedPrices.isEmpty()) {
+            throw new NoSuchElementException("No statistics found for the car: " + car.getModel());
+        }
 
-    public static void main(String[] args) {
-        Car car = new Car(Car.Make.AUDI, 1, 1000, "S3", 2010);
-        scrapeCarDataWithSelenium(car);
+        return scrapedPrices;
     }
 }
