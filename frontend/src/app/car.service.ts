@@ -13,4 +13,8 @@ export class CarService {
   getCarStatistics(car: any): Observable<any> {
     return this.http.post<any>(this.apiUrl, car);
   }
+
+  getCarMakes(): Observable<string[]> {
+    return this.http.get<string[]>('api/car/makes');
+  }
 }
