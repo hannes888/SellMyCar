@@ -1,0 +1,10 @@
+<div>
+  <h2>Car Statistics</h2>
+  <button (click)="getStatistics()">Get Statistics</button>
+  <div *ngIf="statistics">
+    <p>Min Price: {{statistics.minPrice}}</p>
+    <p>Max Price: {{statistics.maxPrice}}</p>
+    <p>Median Price: {{statistics.medianPrice}}</p>
+    <p>Mean Price: {{statistics.meanPrice}}</p>
+  </div>
+</div>
