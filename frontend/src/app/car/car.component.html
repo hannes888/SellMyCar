@@ -1,12 +1,11 @@
 <div class="default-container">
-  <h2>Car Statistics</h2>
   <div class="main-content-container">
     <div class="default-container">
       <mat-form-field>
         <label>Make</label>
-      <mat-select [(ngModel)]="car.make">
-        <mat-option *ngFor="let make of carMakes" [value]="make">{{ make }}</mat-option>
-      </mat-select>
+        <mat-select [(ngModel)]="car.make">
+          <mat-option *ngFor="let make of carMakes" [value]="make">{{ make }}</mat-option>
+        </mat-select>
       </mat-form-field>
       <mat-form-field>
         <label>Model</label>
@@ -23,12 +22,21 @@
       <button mat-flat-button (click)="getStatistics()">Get Statistics</button>
     </div>
     <div>
-      <div *ngIf="statistics">
-        <p>Min Price: {{ statistics.minPrice }}</p>
-        <p>Max Price: {{ statistics.maxPrice }}</p>
-        <p>Median Price: {{ statistics.medianPrice }}</p>
-        <p>Mean Price: {{ statistics.meanPrice }}</p>
-      </div>
+      <mat-card appearance="raised" class="response-container">
+        <div *ngIf="statistics">
+          <p>Min Price: {{ statistics.minPrice }}</p>
+          <p>Max Price: {{ statistics.maxPrice }}</p>
+          <p>Median Price: {{ statistics.medianPrice }}</p>
+          <p>Mean Price: {{ statistics.meanPrice }}</p>
+        </div>
+        <div *ngIf="isLoading" class="loading">
+          <p>Gathering data from the web, this may take a few seconds</p>
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+        <div *ngIf="!statistics && !isLoading">
+          <h3>Find your car's value</h3>
+        </div>
+      </mat-card>
     </div>
   </div>
 </div>
