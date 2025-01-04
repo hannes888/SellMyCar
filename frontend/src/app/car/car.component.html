@@ -2,21 +2,21 @@
   <div class="main-content-container">
     <div class="default-container">
       <mat-form-field>
-        <label>Make</label>
-        <mat-select [(ngModel)]="car.make">
+        <mat-label>Make</mat-label>
+        <mat-select [(ngModel)]="car.make" required>
           <mat-option *ngFor="let make of carMakes" [value]="make">{{ make }}</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field>
-        <label>Model</label>
-        <input matInput [(ngModel)]="car.model">
+        <mat-label>Model</mat-label>
+        <input matInput [(ngModel)]="car.model" required>
       </mat-form-field>
       <mat-form-field>
-        <label>Year</label>
+        <mat-label>Year</mat-label>
         <input matInput [(ngModel)]="car.year">
       </mat-form-field>
       <mat-form-field>
-        <label>Mileage</label>
+        <mat-label>Mileage</mat-label>
         <input matInput [(ngModel)]="car.mileage">
       </mat-form-field>
       <button mat-flat-button (click)="getStatistics()">Get Statistics</button>

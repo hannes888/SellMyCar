@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {CarService} from '../car.service';
 import {NgForOf, NgIf} from '@angular/common';
 import {MatButton} from '@angular/material/button';
-import {MatFormField} from '@angular/material/form-field';
+import {MatFormField, MatFormFieldModule} from '@angular/material/form-field';
 import {MatInput} from '@angular/material/input';
 import {FormsModule} from '@angular/forms';
 import {MatOption, MatSelect} from '@angular/material/select';
@@ -15,6 +15,7 @@ import {MatProgressSpinner} from '@angular/material/progress-spinner';
     NgIf,
     MatButton,
     MatFormField,
+    MatFormFieldModule,
     MatInput,
     FormsModule,
     MatSelect,
@@ -28,7 +29,8 @@ import {MatProgressSpinner} from '@angular/material/progress-spinner';
   standalone: true
 })
 export class CarComponent {
-  car = {make: '', model: '', year: null, mileage: null};
+  const _currentYear: number = new Date().getFullYear();
+  car = {make: '', model: '', year: this._currentYear as number, mileage: null as number | null};
   statistics: any;
   carMakes: string[] = [];
   isLoading: boolean = false;
@@ -44,7 +46,9 @@ export class CarComponent {
 
   getStatistics() {
     this.isLoading = true;
+    this.statistics = null;
     this.car.make.toUpperCase();
+
     this.carService.getCarStatistics(this.car).subscribe({
       next: (data: any) => {
         this.isLoading = false;
