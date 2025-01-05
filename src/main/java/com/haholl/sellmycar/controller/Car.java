@@ -2,6 +2,8 @@ package com.haholl.sellmycar.controller;
 
 import lombok.Data;
 
+import java.util.Optional;
+
 @Data
 public class Car {
     public enum Make {
@@ -16,7 +18,7 @@ public class Car {
 
     private final Make make;
     private final double price;
-    private final int mileage;
+    private final Integer mileage;
     private final String model;
     private final int year;
 }

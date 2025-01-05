@@ -19,10 +19,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Service
 @Slf4j
 public class CarScrapingService {
+    private final List<Integer> mileages = new ArrayList<>(List.of(0, 2500, 5000, 10000, 20000, 30000, 40000,
+            50000, 60000, 70000, 80000, 90000, 100000, 125000, 150000, 175000, 200000));
 
     public CarResponseDto getCarStatistics(Car car) throws Exception {
         List<Integer> scrapedPrices = scrapeCarData(car);
@@ -44,18 +47,21 @@ public class CarScrapingService {
                 minPrice,
                 maxPrice,
                 medianPrice,
-                meanPrice,
-                0  // TODO Implement mileage fetching
+                meanPrice
         );
     }
 
     public List<Integer> scrapeCarData(Car car) throws Exception {
-        String queryUrl = "https://www.autoscout24.com/lst/%s/%s?atype=C&cy=D%%2CA%%2CB%%2CE%%2CF%%2CI%%2CL%%2CNL&desc=0&fregfrom=%d&fregto=%d&page=1&powertype=kw&search_id=1&sort=standard&source=listpage_pagination&ustate=N%%2CU";
+        String[] mileageParams = getMileageParams(car);
+
+        String queryUrl = "https://www.autoscout24.com/lst/%s/%s?atype=C&cy=D%%2CA%%2CB%%2CE%%2CF%%2CI%%2CL%%2CNL&desc=0&fregfrom=%d&fregto=%d&%s%spage=1&powertype=kw&search_id=1&sort=standard&source=listpage_pagination&ustate=N%%2CU";
         String formattedQuery = String.format(queryUrl,
                 car.getMake().toString().toLowerCase(),
                 car.getModel().toLowerCase(),
                 car.getYear() - 1,
-                Math.min(car.getYear() + 1, 2024));
+                Math.min(car.getYear() + 1, 2024),
+                mileageParams[0],
+                mileageParams[1]);
 
         List<Integer> scrapedPrices = new ArrayList<>();
 
@@ -96,5 +102,36 @@ public class CarScrapingService {
         }
 
         return scrapedPrices;
+    }
+
+    private String[] getMileageParams(Car car) {
+        String startMileageAsParam = "";
+        String endMileageAsParam = "";
+        Integer startMileage = null;
+        Integer endMileage = null;
+
+        if (car.getMileage() != null && car.getMileage() >= 0) {
+            if (car.getMileage() >= mileages.getLast()) {
+                startMileage = mileages.getLast();
+            } else {
+                for (int i = 0; i < mileages.size() - 1; i++) {
+                    int current = mileages.get(i);
+                    if (current < car.getMileage() && car.getMileage() < mileages.get(i + 1)) {
+                        startMileage = current;
+                        break;
+                    }
+                }
+            }
+            if (!Objects.equals(startMileage, mileages.getLast())) {
+                endMileage = mileages.get(mileages.indexOf(startMileage) + 1);
+            }
+            if (startMileage != null) {
+                startMileageAsParam = "kmfrom=" + startMileage + "&";
+            }
+            if (endMileage != null) {
+                endMileageAsParam = "kmto=" + endMileage + "&";
+            }
+        }
+        return new String[]{startMileageAsParam, endMileageAsParam};
     }
 }

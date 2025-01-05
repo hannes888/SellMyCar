@@ -29,7 +29,7 @@ import {MatProgressSpinner} from '@angular/material/progress-spinner';
   standalone: true
 })
 export class CarComponent {
-  const _currentYear: number = new Date().getFullYear();
+  _currentYear: number = new Date().getFullYear();
   car = {make: '', model: '', year: this._currentYear as number, mileage: null as number | null};
   statistics: any;
   carMakes: string[] = [];

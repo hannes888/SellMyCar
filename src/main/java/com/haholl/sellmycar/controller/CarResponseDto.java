@@ -8,5 +8,4 @@ public class CarResponseDto {
     private final int maxPrice;
     private final int medianPrice;
     private final int meanPrice;
-    private final int averageMileage;
 }
