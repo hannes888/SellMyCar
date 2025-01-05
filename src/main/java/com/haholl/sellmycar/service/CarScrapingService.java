@@ -111,20 +111,20 @@ public class CarScrapingService {
         Integer endMileage = null;
 
         if (car.getMileage() != null && car.getMileage() >= 0) {
-            if (car.getMileage() >= mileages.getLast()) {
+
+            if (car.getMileage() >= mileages.getLast()) {  // Mileage >= 200,000km
                 startMileage = mileages.getLast();
             } else {
                 for (int i = 0; i < mileages.size() - 1; i++) {
                     int current = mileages.get(i);
                     if (current < car.getMileage() && car.getMileage() < mileages.get(i + 1)) {
                         startMileage = current;
+                        endMileage = mileages.get(i + 1);
                         break;
                     }
                 }
             }
-            if (!Objects.equals(startMileage, mileages.getLast())) {
-                endMileage = mileages.get(mileages.indexOf(startMileage) + 1);
-            }
+
             if (startMileage != null) {
                 startMileageAsParam = "kmfrom=" + startMileage + "&";
             }
